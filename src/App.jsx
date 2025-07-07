@@ -62,8 +62,8 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [apiKey, setApiKey] = useState('Enter_your_api_key_here');
-  const [showApiInput, setShowApiInput] = useState(false);
+  const [apiKey, setApiKey] = useState(import.meta.env.VITE_GEMINI_API_KEY || '');
+  const [showApiInput, setShowApiInput] = useState(!import.meta.env.VITE_GEMINI_API_KEY);
   const [apiError, setApiError] = useState('');
   const messagesEndRef = useRef(null);
 
