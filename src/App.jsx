@@ -75,6 +75,13 @@ function App() {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    // Debug: Log the API key status
+    console.log('API Key loaded:', apiKey ? 'Yes' : 'No');
+    console.log('API Key length:', apiKey?.length || 0);
+    console.log('Show API Input:', showApiInput);
+  }, [apiKey, showApiInput]);
+
   const validateApiKey = (key) => {
     // Basic validation for Gemini API key format
     return key && key.length > 30 && key.startsWith('AIza');
@@ -107,11 +114,13 @@ function App() {
     setIsLoading(true);
 
     try {
+      console.log('Sending request with API key:', apiKey.substring(0, 10) + '...');
+      
       const response = await axios.post(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
         {
           contents: [{
-            parts: [{ text: input }]
+            parts: [{ text: userMessage.content }]
           }]
         },
         {
@@ -121,6 +130,8 @@ function App() {
         }
       );
 
+      console.log('API Response:', response.data);
+
       if (response.data.candidates && response.data.candidates[0]) {
         const aiResponse = response.data.candidates[0].content.parts[0].text;
         setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
@@ -128,19 +139,30 @@ function App() {
         throw new Error('Invalid response from API');
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Full error object:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      console.error('Error message:', error.message);
+      
       let errorMessage = 'Sorry, I encountered an error. ';
       
       if (error.response?.status === 400) {
-        errorMessage += 'Invalid API key or request format. Please check your API key.';
+        const errorData = error.response.data;
+        if (errorData?.error?.message) {
+          errorMessage += `API Error: ${errorData.error.message}`;
+        } else {
+          errorMessage += 'Invalid API key or request format. Please check your API key.';
+        }
         setShowApiInput(true);
       } else if (error.response?.status === 403) {
         errorMessage += 'API key access denied. Please verify your API key has the correct permissions.';
         setShowApiInput(true);
       } else if (error.response?.status === 429) {
         errorMessage += 'Rate limit exceeded. Please try again later.';
+      } else if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
+        errorMessage += 'Network connection error. Please check your internet connection.';
       } else {
-        errorMessage += 'Please try again.';
+        errorMessage += `Unexpected error: ${error.message}`;
       }
       
       setMessages(prev => [...prev, { 
