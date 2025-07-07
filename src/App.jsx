@@ -117,7 +117,7 @@ function App() {
       console.log('Sending request with API key:', apiKey.substring(0, 10) + '...');
       
       const response = await axios.post(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
         {
           contents: [{
             parts: [{ text: userMessage.content }]
