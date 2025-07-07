@@ -62,8 +62,8 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [apiKey, setApiKey] = useState('');
-  const [showApiInput, setShowApiInput] = useState(true);
+  const [apiKey, setApiKey] = useState(import.meta.env.VITE_GEMINI_API_KEY || '');
+  const [showApiInput, setShowApiInput] = useState(!import.meta.env.VITE_GEMINI_API_KEY);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
