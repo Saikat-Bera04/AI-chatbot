@@ -62,8 +62,8 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [apiKey, setApiKey] = useState('');
-  const [showApiInput, setShowApiInput] = useState(true);
+  const [apiKey, setApiKey] = useState('AIzaSyC7PFF6wBOlYI70f-KhmW4FmGNZ7jB9KOE');
+  const [showApiInput, setShowApiInput] = useState(false);
   const [apiError, setApiError] = useState('');
   const messagesEndRef = useRef(null);
 
