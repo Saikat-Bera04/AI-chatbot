@@ -387,6 +387,19 @@ body {
   box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
 }
 
+.api-error {
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  color: #ff6b6b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
 .api-help {
   color: rgba(255, 255, 255, 0.7);
   font-size: 0.9rem;

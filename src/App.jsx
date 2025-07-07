@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Send, ArrowUpRight, ArrowDownLeft, ArrowUpLeft, ArrowDownRight } from 'lucide-react';
+import { Sparkles, Send, ArrowUpRight, ArrowDownLeft, ArrowUpLeft, ArrowDownRight, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import './App.css';
 
@@ -62,8 +62,9 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [apiKey, setApiKey] = useState(import.meta.env.VITE_GEMINI_API_KEY || '');
-  const [showApiInput, setShowApiInput] = useState(!import.meta.env.VITE_GEMINI_API_KEY);
+  const [apiKey, setApiKey] = useState('');
+  const [showApiInput, setShowApiInput] = useState(true);
+  const [apiError, setApiError] = useState('');
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -74,11 +75,26 @@ function App() {
     scrollToBottom();
   }, [messages]);
 
+  const validateApiKey = (key) => {
+    // Basic validation for Gemini API key format
+    return key && key.length > 30 && key.startsWith('AIza');
+  };
+
   const handleApiKeySubmit = (e) => {
     e.preventDefault();
-    if (apiKey.trim()) {
-      setShowApiInput(false);
+    setApiError('');
+    
+    if (!apiKey.trim()) {
+      setApiError('Please enter an API key');
+      return;
     }
+    
+    if (!validateApiKey(apiKey)) {
+      setApiError('Invalid API key format. Please check your Gemini API key.');
+      return;
+    }
+    
+    setShowApiInput(false);
   };
 
   const sendMessage = async (e) => {
@@ -105,17 +121,42 @@ function App() {
         }
       );
 
-      const aiResponse = response.data.candidates[0].content.parts[0].text;
-      setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
+      if (response.data.candidates && response.data.candidates[0]) {
+        const aiResponse = response.data.candidates[0].content.parts[0].text;
+        setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
+      } else {
+        throw new Error('Invalid response from API');
+      }
     } catch (error) {
       console.error('Error:', error);
+      let errorMessage = 'Sorry, I encountered an error. ';
+      
+      if (error.response?.status === 400) {
+        errorMessage += 'Invalid API key or request format. Please check your API key.';
+        setShowApiInput(true);
+      } else if (error.response?.status === 403) {
+        errorMessage += 'API key access denied. Please verify your API key has the correct permissions.';
+        setShowApiInput(true);
+      } else if (error.response?.status === 429) {
+        errorMessage += 'Rate limit exceeded. Please try again later.';
+      } else {
+        errorMessage += 'Please try again.';
+      }
+      
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: 'Sorry, I encountered an error. Please check your API key and try again.' 
+        content: errorMessage
       }]);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const resetApiKey = () => {
+    setApiKey('');
+    setApiError('');
+    setShowApiInput(true);
+    setMessages([]);
   };
 
   if (showApiInput) {
@@ -150,12 +191,20 @@ function App() {
             <Sparkles className="setup-icon" size={48} />
             <h2>Welcome to EVO AI</h2>
             <p>Enter your Gemini API key to get started</p>
+            
+            {apiError && (
+              <div className="api-error">
+                <AlertCircle size={16} />
+                <span>{apiError}</span>
+              </div>
+            )}
+            
             <form onSubmit={handleApiKeySubmit} className="api-form">
               <input
                 type="password"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder="Enter your Gemini API key"
+                placeholder="Enter your Gemini API key (starts with AIza...)"
                 className="api-input"
                 required
               />
@@ -164,12 +213,22 @@ function App() {
                 Start Chatting
               </button>
             </form>
-            <p className="api-help">
-              Get your free API key from{' '}
-              <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer">
-                Google AI Studio
-              </a>
-            </p>
+            <div className="api-help">
+              <p>
+                Get your free API key from{' '}
+                <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer">
+                  Google AI Studio
+                </a>
+              </p>
+              <p style={{ marginTop: '12px', fontSize: '0.85rem' }}>
+                <strong>Steps to get your API key:</strong><br/>
+                1. Visit Google AI Studio<br/>
+                2. Sign in with your Google account<br/>
+                3. Click "Get API key"<br/>
+                4. Create a new API key<br/>
+                5. Copy and paste it here
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -183,7 +242,7 @@ function App() {
         <div className="corner-arrow top-left">
           <ArrowUpLeft size={20} />
         </div>
-        <div className="corner-arrow top-right">
+        <div className="corner-arrow top-right" onClick={resetApiKey} style={{ cursor: 'pointer' }}>
           <ArrowUpRight size={20} />
         </div>
         <div className="corner-arrow bottom-left">
